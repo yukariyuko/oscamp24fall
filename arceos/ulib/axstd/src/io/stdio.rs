@@ -25,6 +25,8 @@ impl Read for StdinRaw {
 
 impl Write for StdoutRaw {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let color_code: &[u8] = b"\x1b[31m";
+        arceos_api::stdio::ax_console_write_bytes(color_code);
         arceos_api::stdio::ax_console_write_bytes(buf)
     }
     fn flush(&mut self) -> io::Result<()> {
