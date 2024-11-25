@@ -1,3 +1,4 @@
+use core::str::FromStr;
 use std::fs::{self, File, FileType};
 use std::io::{self, prelude::*};
 use std::{string::String, vec::Vec};
@@ -24,8 +25,10 @@ const CMD_TABLE: &[(&str, CmdHandler)] = &[
     ("help", do_help),
     ("ls", do_ls),
     ("mkdir", do_mkdir),
+    ("mv", do_mv),
     ("pwd", do_pwd),
     ("rm", do_rm),
+    ("rename", do_rename),
     ("uname", do_uname),
 ];
 
@@ -192,6 +195,66 @@ fn do_mkdir(args: &str) {
         if let Err(e) = mkdir_one(path) {
             print_err!("mkdir", format_args!("cannot create directory '{path}'"), e);
         }
+    }
+}
+
+fn do_mv(args: &str) {
+    if args.is_empty() {
+        print_err!("mv", "missing operand");
+        return;
+    }
+
+    fn mv_one(file: &str, path: &str) -> io::Result<()> {
+        let path = String::from_str(path).unwrap();
+        let path = path + "/" + file;
+        let metadata = fs::metadata(file)?;
+        if metadata.is_dir() {
+            fs::rename(file, &path)?;
+        } else {
+            let mut new_file = File::create(&path)?;
+            let mut old_file = File::open(file)?;
+            let mut buf = Vec::new();
+            old_file.read_to_end(&mut buf)?;
+            new_file.write_all(&buf)?;
+            fs::remove_file(file)?;
+        }
+        Ok(())
+    }
+
+    let mut old = "";
+    let mut new = "";
+    let mut cnt = 0;
+    for i in args.split_whitespace() {
+        if cnt == 0 {
+            old = i;
+        } else if cnt == 1 {
+            new = i;
+        } else {
+            print_err!("mv", "too many arguments");
+        }
+        cnt += 1;
+    }
+    if let Err(e) = mv_one(old, new) {
+        print_err!("mv", format_args!("cannot move '{old}' to '{new}'"), e);
+    }
+}
+
+fn do_rename(args: &str) {
+    let mut old = "";
+    let mut new = "";
+    let mut cnt = 0;
+    for i in args.split_whitespace() {
+        if cnt == 0 {
+            old = i;
+        } else if cnt == 1 {
+            new = i;
+        } else {
+            print_err!("rename", "too many arguments");
+        }
+        cnt += 1;
+    }
+    if let Err(_) = fs::rename(old, new) {
+        print_err!("rename", "error when rename");
     }
 }
 
