@@ -1,2 +1,3 @@
 # oscamp
-Experiments and course for oscamp.
+
+24秋冬季oscamp三阶段的练习，完成的各个练习在各个对应分支上，第三周的因为学校里的事只看了视频
